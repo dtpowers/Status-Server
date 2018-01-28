@@ -1,34 +1,16 @@
-from flask import Flask
-app = Flask(__name__)
+import boto3
+import datetime
+import io
+import json
+# from flask import Flask
+# app = Flask(__name__)
 
 
-# Status Format
-```
-{
-	statuses: 
-		{
-		statusID: 1
-		status : {
-			time: str
-			weight: str
-			comment: str
-			}
-	    },
-		{
-		statusID: 2
-		status : {
-			time: str
-			weight: str
-			comment: str
-			}
-	    }
-}
-```
 
-########### ROUTES
-@app.route("/")
-def hello_world():
-  return "Hello, World!"
+# ########### ROUTES
+# @app.route("/")
+# def hello_world():
+#   return "Hello, World!"
 
 
 
@@ -38,14 +20,17 @@ def hello_world():
 def serverInit():
 	global DATABASE
 	global prevStatus
+	global s3
+	s3 = boto3.resource('s3')
 	DATABASE = loadDB()
 	print("Server initialized...")
 	prevStatus = len(DATABASE)
 	print('Previous Status #: ' + str(prevStatus))
 
+
 def recStatus(status):
 	prevStatus += 1
-	DATABASE['statuses'][] = status
+	DATABASE = status
 
 
 def getLastStatus():
@@ -53,7 +38,7 @@ def getLastStatus():
 	
 
 def getStatus(id):
-	return DATABASE[where id = statusID]
+	return DATABASE[id]
 
 ##########################DB OPERATIONS#################################
 
@@ -61,7 +46,8 @@ def getStatus(id):
 #read database from disk into memory
 def loadDB():
 	print('Loading Database...')
-	database = json.loads(open('data.json'))
+	response = s3.Bucket('pistatus').get_object(Bucket='pistatus', Key='data.json')
+	database = json.loads(response['Body'].read())
 	pprint(database)
 	DATABASE = database
 	print('Finished Loading ')
@@ -69,6 +55,15 @@ def loadDB():
 
 #write db from memory to disk
 def saveDB():
+	data = io.BytesIO()
+
+	s3.Bucket('pistatus').put_object(Key=(data.json), Body=data)
 	with open('data.json', 'w') as outfile:
     	json.dump(DATABASE, outfile)
     print('Wrote DB to disk...')
+
+
+
+############################################## tests
+serverInit()
+loadDB()
