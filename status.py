@@ -2,6 +2,7 @@ import boto3
 import datetime
 import io
 import json
+import pprint
 # from flask import Flask
 # app = Flask(__name__)
 
@@ -18,49 +19,46 @@ import json
 ##################SERVER LOGIC
 
 def serverInit():
-	global DATABASE
-	global prevStatus
-	global s3
-	s3 = boto3.resource('s3')
-	DATABASE = loadDB()
-	print("Server initialized...")
-	prevStatus = len(DATABASE)
-	print('Previous Status #: ' + str(prevStatus))
-
+    global DATABASE
+    global prevStatus
+    global s3
+    global pp
+    pp = pprint.PrettyPrinter(indent=4)
+    s3 = boto3.client('s3')
+    DATABASE = loadDB()
+    print("Server initialized...")
+    prevStatus = len(DATABASE)
+    print('Previous Status #: ' + str(prevStatus))
 
 def recStatus(status):
-	prevStatus += 1
-	DATABASE = status
+    prevStatus += 1
+    DATABASE = status
 
 
 def getLastStatus():
-	status = DATABASE[str(prevStatus)]
-	return status
-	
+    status = DATABASE[str(prevStatus)]
+    return status
+    
 
 def getStatus(id):
-	return DATABASE[id]
+    return DATABASE[id]
 
 ##########################DB OPERATIONS#################################
 
 
 #read database from disk into memory
 def loadDB():
-	print('Loading Database...')
-	response = s3.Bucket('pistatus').get_object(Bucket='pistatus', Key='data.json')
-	database = json.loads(response['Body'].read())
-	pprint(database)
-	DATABASE = database
-	print('Finished Loading ')
+    print('Loading Database...')
+    response = s3.get_object(Bucket='pistatus', Key='data.json')
+    database = json.loads(response['Body'].read().decode("UTF-8"))
+    pp.pprint(database)
+    DATABASE = database
+    print('Finished Loading ')
 
 
 #write db from memory to disk
 def saveDB():
-	data = io.BytesIO()
-
-	s3.Bucket('pistatus').put_object(Key=(data.json), Body=data)
-	with open('data.json', 'w') as outfile:
-    	json.dump(DATABASE, outfile)
+    s3.Bucket('pistatus').put_object(Key='data.json', Body=DATABASE)
     print('Wrote DB to disk...')
 
 
