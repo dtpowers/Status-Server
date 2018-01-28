@@ -34,7 +34,8 @@ def recStatus(status):
 
 
 def getLastStatus():
-	return status = DATABASE[str(prevStatus)]
+	status = DATABASE[str(prevStatus)]
+	return status
 	
 
 def getStatus(id):
